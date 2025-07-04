@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## Badges
 
-First, run the development server:
+
+![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&style=flat-square)
+![OpenRouter](https://img.shields.io/badge/AI%20API-OpenRouter-blueviolet?logo=openai&style=flat-square)
+![Next.js](https://img.shields.io/badge/Frontend-Next.js-black?logo=next.js&style=flat-square)
+![Tailwind](https://img.shields.io/badge/Styling-TailwindCSS-38bdf8?logo=tailwindcss&style=flat-square)
+![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178c6?logo=typescript&style=flat-square)
+
+## 🖥️ Demo
+
+🔗 [Live App on Vercel](https://ai-powered-healthcare-qa-agent-dkg5.vercel.app/)
+
+---
+# 🩺 AI-Powered Healthcare Document QA Agent
+
+An intelligent web application that enables users to upload healthcare-related PDF documents (e.g., insurance forms, policies, claims), ask natural language questions, and receive accurate, real-time answers using AI. Built with cutting-edge frontend and backend technologies and deployed seamlessly on Vercel.
+
+
+## 📌 Agenda
+
+To reduce complexity and confusion in understanding healthcare documents by allowing users to interactively query forms and get clear, natural language explanations powered by LLMs.
+
+
+## ❓ Problem Statement
+
+Healthcare documents are notoriously difficult to interpret due to legal and technical jargon. Patients and non-experts often find it overwhelming to understand terms like **deductibles**, **co-payments**, or **eligibility clauses**.
+
+> **Goal:** Build a tool where a user can upload a healthcare PDF form and ask questions like:
+> - “What is the deductible amount?”
+> - “Does this plan cover maternity?”
+> - “What are the pre-existing conditions?”
+
+
+## ✅ Solution
+
+A full-stack application that:
+- Accepts PDF documents from users
+- Extracts text using `pdf-parse`
+- Accepts voice/text input from users
+- Streams AI-generated answers using **OpenRouter** and **Mistral-7B Instruct**
+- Displays results in real-time with history tracking
+- Allows exporting chat history as a PDF
+
+
+##  🛠️ Technologies Used
+### Frontend
+- **Next.js 15 App Router**
+- **TypeScript**
+- **Tailwind CSS + Shadcn/UI**
+- **Vercel (for deployment)**
+- **Voice-to-text API (Web Speech API)**
+- **jsPDF** for PDF download
+
+### Backend
+- **API Routes (Next.js App Router)**
+- **Streaming OpenAI-compatible APIs via OpenRouter**
+- **PDF parsing via `pdf-parse`**
+
+##  🛍️ Features
+
+- 📄 Upload and parse healthcare PDF forms
+- 🎤 Voice-based question input
+- 🤖 Ask free-form natural language questions
+- ⚡ Live streaming answers (no loading delay)
+- 🧠 Answer history with download as PDF
+- 🌙 Light/Dark mode toggle
+- 📱 Mobile-responsive UI
+##   🗂️  Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+CosmeticManagement/
+├── admin/                 # Admin panel pages and logic
+├── css/                   # Stylesheets
+├── dashboard/             # User dashboard components
+├── fonts/                 # Font files
+├── img/                   # Image assets
+├── js/                    # JavaScript files
+├── upload/                # Uploaded files
+├── Home.aspx              # Landing page
+├── Register.aspx          # User registration page
+├── Master.Master          # Master page template
+├── Web.config             # Application configuration
+└── SQLQuery1.sql          # Database schema and queries
+```
+## 🚀 Getting Started
+
+### 1. Clone this repo
+```bash
+git clone https://github.com/amruthadevops/AI-powered-Healthcare-QA-Agent.git
+cd AI-powered-Healthcare-QA-Agent
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Setup Environment Variables
+```bash
+OPENROUTER_API_KEY=your_openrouter_api_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run locally
+```bash
+npm run dev
+```
 
-## Learn More
+## 🔒 Security Notes
 
-To learn more about Next.js, take a look at the following resources:
+- Only public LLM APIs (via OpenRouter) are used.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- No private medical information is stored or logged.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- You can add authentication via Clerk or Auth.js if needed.
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 💡 Future Enhancements
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- RAG-based retrieval with vector database
+
+- Support for uploading multiple files
+
+- User login/auth & saved sessions
+
+- Export answers to Excel
+
+- Multi-language support
+## 📄 License
+
+MIT License. Feel free to fork, remix, and improve.
+
+## 📬 Contact
+
+Amrutha C
+
+[LinkedIn](https://www.linkedin.com/in/c-amrutha/)
+
