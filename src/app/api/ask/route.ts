@@ -30,7 +30,7 @@ Answer in simple, clear language. If the answer is not in the document, say so.
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream', 
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'http://localhost:3000',
+        'HTTP-Referer': 'https://ai-powered-healthcare-qa-agent-dkg5.vercel.app/',
         'X-Title': 'Healthcare QA Agent',
       },
       body: JSON.stringify({
