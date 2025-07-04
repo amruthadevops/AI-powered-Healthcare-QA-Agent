@@ -1,7 +1,6 @@
 export const runtime = 'edge';
-import { NextRequest } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const { formText, question } = await req.json();
 
@@ -28,26 +27,28 @@ Answer in simple, clear language. If the answer is not in the document, say so.
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream', 
+        'Accept': 'text/event-stream', // ✅ Required for OpenRouter streaming
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://ai-powered-healthcare-qa-agent-dkg5.vercel.app/',
+        'HTTP-Referer': 'https://ai-powered-healthcare-qa-agent-dkg5.vercel.app/', // ✅ Update this!
         'X-Title': 'Healthcare QA Agent',
       },
       body: JSON.stringify({
         model: 'mistralai/mistral-7b-instruct',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
-        stream: true, // 👈 important!
+        stream: true,
       }),
     });
 
+    // ✅ Stream response back to client
     if (!response.ok || !response.body) {
-      const err = await response.json();
-      console.error('OpenRouter error:', err);
-      return new Response(JSON.stringify({ error: 'OpenRouter error' }), { status: 500 });
+      console.error('OpenRouter response error', await response.text());
+      return new Response(JSON.stringify({ error: 'OpenRouter request failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // 👇 stream the response to the client
     return new Response(response.body, {
       status: 200,
       headers: {
@@ -56,9 +57,8 @@ Answer in simple, clear language. If the answer is not in the document, say so.
         'Connection': 'keep-alive',
       },
     });
-
-  } catch (err) {
-    console.error('API error:', err);
+  } catch (err: any) {
+    console.error('Server error:', err.message || err);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
