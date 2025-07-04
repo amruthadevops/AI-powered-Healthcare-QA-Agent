@@ -1,103 +1,246 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from 'react'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { useTheme } from 'next-themes'
+import jsPDF from 'jspdf'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [formText, setFormText] = useState("")
+  const [question, setQuestion] = useState("")
+  const [answer, setAnswer] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [streamedAnswer, setStreamedAnswer] = useState('')
+  const [history, setHistory] = useState<{ question: string; answer: string }[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const { theme, setTheme } = useTheme()
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError("")
+    setFormText("")
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed")
+      }
+
+      setFormText(data.text || "")
+    } catch (err: any) {
+      setError(err.message || "Upload error")
+    }
+  }
+
+  const handleAsk = async () => {
+    setError('');
+    setAnswer('');
+    setStreamedAnswer('');
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formText, question }),
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error("Streaming failed");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.startsWith('data: ') && !line.includes('[DONE]'));
+
+        for (const line of lines) {
+          const jsonStr = line.replace(/^data: /, '');
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed?.choices?.[0]?.delta?.content;
+            if (content) {
+              result += content;
+              setStreamedAnswer(result);
+            }
+          } catch (err) {
+            console.warn('Failed to parse chunk:', line, err);
+          }
+        }
+      }
+
+      setHistory((prev) => [...prev, { question, answer: result }]);
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError("Speech recognition not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setQuestion("Listening...");
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setQuestion(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      setError("Speech recognition error: " + event.error);
+    };
+
+    recognition.start();
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.text("AI Healthcare QA Answers", 10, 10);
+
+    let y = 20;
+
+    history.forEach((item, idx) => {
+      const q = `Q${idx + 1}: ${item.question}`;
+      const a = `A${idx + 1}: ${item.answer}`;
+      doc.text(q, 10, y);
+      y += 10;
+      doc.text(a, 10, y);
+      y += 15;
+    });
+
+    doc.save("chat-answers.pdf");
+  };
+
+
+  return (
+    <main className="min-h-screen bg-background text-foreground p-2 md:p-4 flex flex-col md:flex-row">
+      {showHistory && (
+        <div className="w-full md:w-80 bg-white dark:bg-gray-900 text-black dark:text-white shadow-lg rounded-xl p-4 mr-4 flex flex-col justify-between">
+          <div>
+            <h2 className="font-bold text-lg mb-2">Chat History</h2>
+            <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-2">
+              {history.map((item, idx) => (
+                <div key={idx} className="border-t pt-2 text-sm">
+                  <p className="font-semibold">Q: {item.question}</p>
+                  <p>A: {item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Button onClick={() => setHistory([])} variant="outline" className="mt-4 w-full">
+            Clear History
+          </Button>
+          <Button
+            onClick={handleDownloadPDF}
+            className="mt-2 w-full" >
+            📄 Download PDF
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      )}
+
+      <div className="flex-1 max-w-2xl space-y-6 mx-auto">
+        <h1 className="text-3xl font-bold text-center mt-6">
+          🩺 AI Healthcare Form QA Agent
+        </h1>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <form onSubmit={handleUpload} className="flex gap-2 items-center">
+            <Input name="file" type="file" accept="application/pdf" required />
+            <Button type="submit">Upload PDF</Button>
+          </form>
+          <div className="flex gap-2 justify-center w-full sm:w-auto">
+            <Button variant="secondary" onClick={() => setShowHistory(!showHistory)}>
+              {showHistory ? 'Hide History' : 'Show History'}
+            </Button>
+            <Button variant="outline" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+            </Button>
+          </div>
+        </div>
+
+        {formText && (
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardContent className="p-4 whitespace-pre-wrap text-sm max-h-60 overflow-y-auto">
+              {formText}
+            </CardContent>
+          </Card>
+        )}
+
+        <Textarea
+          value={formText}
+          onChange={(e) => setFormText(e.target.value)}
+          placeholder="Paste or edit the form content here..."
+          className="min-h-[150px]"
+        />
+
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask a question like: What is the deductible?"
+            className="flex-1"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+          <Button type="button" onClick={handleVoiceInput}>🎤</Button>
+        </div>
+
+
+        <Button onClick={handleAsk} disabled={loading} className="w-full">
+          {loading ? 'Asking...' : 'Ask AI'}
+        </Button>
+
+        {error && <p className="text-red-500 text-sm text-center mt-4">{error}</p>}
+
+        {loading ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-6 text-center text-gray-500">
+            <span className="animate-pulse">Thinking...</span>
+          </div>
+        ) : streamedAnswer ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-6">
+            <h2 className="font-bold mb-2 text-lg">Answer:</h2>
+            <p className="whitespace-pre-wrap">{streamedAnswer}</p>
+          </div>
+        ) : null}
+      </div>
+    </main>
+  )
 }
