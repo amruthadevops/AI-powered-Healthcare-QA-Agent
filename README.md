@@ -70,19 +70,31 @@ A full-stack application that:
 ##   🗂️  Project Structure
 
 ```bash
-CosmeticManagement/
-├── admin/                 # Admin panel pages and logic
-├── css/                   # Stylesheets
-├── dashboard/             # User dashboard components
-├── fonts/                 # Font files
-├── img/                   # Image assets
-├── js/                    # JavaScript files
-├── upload/                # Uploaded files
-├── Home.aspx              # Landing page
-├── Register.aspx          # User registration page
-├── Master.Master          # Master page template
-├── Web.config             # Application configuration
-└── SQLQuery1.sql          # Database schema and queries
+ai-healthcare-qa-app/
+├── public/
+│   └── favicon.ico                  # Tab icon for browser
+│
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── ask/route.ts         # Serverless route: Sends streamed prompt to OpenRouter
+│   │   │   └── upload/route.ts      # Serverless route: Uploads and parses PDF file content
+│   │   ├── page.tsx                 # Main UI page: handles form, Q&A, streaming response
+│   │   ├── layout.tsx               # App-wide layout wrapper
+│   │   ├── globals.css              # Global styles
+│   │   └── providers.tsx            # Theme provider (for light/dark toggle)
+│
+│   ├── components/                  # UI elements (Button, Input, etc. via Shadcn)
+│
+│   └── types/
+│       └── pdf-parse.d.ts           # Type declaration for `pdf-parse/lib/pdf-parse`
+│
+├── .env.local                       # Environment variables (e.g. OpenRouter API key)
+├── package.json                     # Dependencies and build scripts
+├── next.config.mjs                  # Next.js config
+├── tsconfig.json                    # TypeScript settings
+└── README.md                        # You’ll create this (project overview)
+
 ```
 ## 🚀 Getting Started
 
