@@ -83,7 +83,7 @@ export default function Home() {
           const jsonStr = line.replace(/^data: /, '');
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed?.choices?.[0]?.delta?.content;
+            const content = parsed?.choices?.[0]?.delta?.content || parsed?.message?.content;
             if (content) {
               result += content;
               setStreamedAnswer(result);

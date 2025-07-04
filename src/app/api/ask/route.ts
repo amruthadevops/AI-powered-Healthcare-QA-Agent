@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,7 @@ Answer in simple, clear language. If the answer is not in the document, say so.
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream', 
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'HTTP-Referer': 'http://localhost:3000',
         'X-Title': 'Healthcare QA Agent',
