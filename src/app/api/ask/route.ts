@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 export async function POST(req: Request) {
   try {
     const { formText, question } = await req.json();
@@ -29,7 +27,7 @@ Answer in simple, clear language. If the answer is not in the document, say so.
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream', // ✅ Required for OpenRouter streaming
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://ai-powered-healthcare-qa-agent-dkg5.vercel.app/', // ✅ Update this!
+        'HTTP-Referer': 'https://ai-powered-healthcare-qa-agent-dkg5.vercel.app', // ✅ Update this!
         'X-Title': 'Healthcare QA Agent',
       },
       body: JSON.stringify({
